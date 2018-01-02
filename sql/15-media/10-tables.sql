@@ -1,0 +1,19 @@
+CREATE TABLE media.media(
+       id SERIAL PRIMARY KEY,
+       user_id UUID REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL,
+       mime_type VARCHAR(64) DEFAULT NULL,
+       filename VARCHAR(256) NOT NULL,
+       filesize INTEGER DEFAULT NULL,
+       fs_path VARCHAR(512) DEFAULT NULL UNIQUE,
+       ctime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC'),
+       mtime TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT (NOW() AT TIME ZONE 'UTC')
+);
+
+
+CREATE TABLE media.images(
+       title VARCHAR(256) DEFAULT NULL,
+       thumbnail_path VARCHAR(512) DEFAULT NULL UNIQUE
+) INHERITS(media.media);
+
+
+CREATE UNIQUE INDEX IF NOT EXISTS media_image_uidx ON media.images(id);
