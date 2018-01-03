@@ -142,46 +142,97 @@ class Test(ki.testing.ModelTest):
             fetched = ki.models.users.get_user_info(tx, self.user)
             assert(not fetched)
 
-    def test_authenticate_valid(self):
+    def test_authenticate(self):
         self.user.password = "password"
 
         with self.pgsql.transaction() as tx:
             r = ki.models.users.create(tx, self.user)
             assert r.id
 
-            session_id = str(uuid.uuid1())
-            r = users.authenticate(
-                username,
-                password,
-                session_id=session_id
-            )
+    def test_authenticate_password(self):
+        self.user.password = "password"
+
+        with self.pgsql.transaction() as tx:
+            r = ki.models.users.create(tx, self.user)
+            assert r.id
+
+            r = ki.models.users.authenticate(tx, self.user)
             assert r
 
-        sess = Session(session_id)
-        cached = sess.get("user_id", "ctime")
-        assert cached
-        self.assertEqual(r.id, cached[0])
+            self.user.password = "invalid"
+            r = ki.models.users.authenticate(tx, self.user)
+            assert not r
 
-    # def test_authenticate_invalid(self):
-    #     username = "test-authenticate-invalid"
-    #     password = "password"
+    def test_authenticate_username(self):
+        self.user.password = "password"
 
-    #     r = users.create(
-    #         username,
-    #         password,
-    #         cursor_type=tuple,
-    #     )
+        with self.pgsql.transaction() as tx:
+            r = ki.models.users.create(tx, self.user)
+            assert r.id
 
-    #     assert r.id
+            r = ki.models.users.authenticate(tx, self.user)
+            assert r
 
-    #     r = users.authenticate(
-    #         username,
-    #         "INVALID",
-    #     )
-    #     assert not r
+            self.user.name = "invalid"
+            r = ki.models.users.authenticate(tx, self.user)
+            assert not r
 
-    #     r = users.authenticate(
-    #         "INVALID",
-    #         password,
-    #     )
-    #     assert not r
+    def test_emails(self):
+        self.user.password = "password"
+
+        with self.pgsql.transaction() as tx:
+            r = ki.models.users.create(tx, self.user)
+            assert r.id
+            self.user.id = r.id
+            tx.connection.commit()
+
+        with self.assertRaises(ki.errors.ValidationError):
+            with self.pgsql.transaction() as tx:
+                self.user.email = "invalid"
+                ki.models.users.set_email(tx, self.user)
+
+        with self.pgsql.transaction() as tx:
+            self.user.email = "valid.email@localhost"
+            r = ki.models.users.set_email(tx, self.user)
+            assert(r)
+
+            fetched = ki.models.users.get(tx, self.user)
+            assert fetched.id
+            assert not fetched.email_verified_on
+
+            r = ki.models.users.set_email_verified(tx, self.user)
+            assert(r)
+
+            fetched = ki.models.users.get(tx, self.user)
+            assert fetched.id
+            assert fetched.email == self.user.email
+            assert fetched.email_verified_on
+
+            r = ki.models.users.remove_email(tx, self.user)
+            assert(r)
+
+            fetched = ki.models.users.get(tx, self.user)
+            assert fetched.id
+            assert not fetched.email
+            assert not fetched.email_verified_on
+
+    def test_password(self):
+        with self.pgsql.transaction() as tx:
+            r = ki.models.users.create(tx, self.user)
+            assert r.id
+            self.user.id = r.id
+            tx.connection.commit()
+
+        with self.assertRaises(ki.errors.ValidationError):
+            invalid = ["", False, True, 12345, None]
+            for passwd in invalid:
+                with self.pgsql.transaction() as tx:
+                    self.user.password = passwd
+                    ki.models.users.set_password(tx, self.user)
+
+        valid = ["okokok", "password", "this is also ok", 123456]
+        for passwd in valid:
+            with self.pgsql.transaction() as tx:
+                self.user.password = passwd
+                r = ki.models.users.set_password(tx, self.user)
+                assert r

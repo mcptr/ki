@@ -5,7 +5,7 @@ import ki.pgsql
 import ki.logg
 import ki.errors
 from ki import validators
-# from schzd.models.user_session import Session
+from ki.models.sessions import Session
 
 
 log = ki.logg.get(__name__)
@@ -154,7 +154,7 @@ def email_exists(tx, user):
     return r.email_exists
 
 
-def authenticate(tx, user, **kwargs):
+def authenticate(tx, user):
     log.info("Authenticating: %s", user.name)
     sql = (
         "SELECT * FROM auth.authenticate_user(%s, %s)"
@@ -163,18 +163,7 @@ def authenticate(tx, user, **kwargs):
 
     tx.execute(sql, (user.name, user.password))
     r = tx.fetchone()
-
-    if r.id:
-        sid = kwargs.pop("session_id", None)
-        if sid:
-            sess = Session(sid)
-            sess.update(
-                user_id=str(r.id),
-                ctime=time.time(),
-            )
-            sess.touch()
-        return r
-    return None
+    return r.id
 
 
 def set_password(tx, user):
@@ -185,7 +174,7 @@ def set_password(tx, user):
 
     tx.execute(sql, (user.password, user.id))
     r = tx.fetchone()
-    return r.id
+    return r.id if r else None
 
 
 def set_email_verified(tx, user):
@@ -219,7 +208,7 @@ def remove_email(tx, user):
     log.info("Removing email for user: %s", user.id)
 
     sql = (
-        "UPDATE auth.users SET email = NULL"
+        "UPDATE auth.users SET email = NULL, email_verified_on = NULL"
         "  WHERE id=%s RETURNING id"
     )
 
