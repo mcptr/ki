@@ -106,7 +106,7 @@ def get_by_email(tx, user, active_only=True, **kwargs):
         sql += " AND is_active"
 
     tx.execute(sql, (user.email,))
-    return fetchone()
+    return tx.fetchone()
 
 
 def get_user_info(tx, user):
@@ -124,7 +124,8 @@ def get_user_info(tx, user):
         "       total_comments BIGINT)"
     )
     tx.execute(sql, (user.name, ))
-    return tx.fetchone()
+    r = tx.fetchone()
+    return r if r.name else None
 
 
 def user_exists(tx, user):

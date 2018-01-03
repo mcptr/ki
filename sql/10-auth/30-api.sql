@@ -30,10 +30,13 @@ BEGIN
 	       EXTRACT('EPOCH' FROM u.mtime)::INTEGER
 	       FROM auth.users u
 	       INTO R
-	       WHERE u.name = name_ AND crypt(password_, password) = password;
+	       WHERE u.name = name_ AND crypt(password_, password) = password
+	       AND u.is_active AND u.is_closed = false;
+
 	IF FOUND THEN
 	   RETURN R;
 	END IF;
+
 	RETURN NULL;
 END;
 $$

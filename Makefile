@@ -7,3 +7,6 @@ test: test-pep8
 clean:
 	find . -name __pycache__ | xargs rm -vrf
 	find . -name '*~' | xargs rm -vrf
+
+sql-schema:
+	@find sql -name '*.sql' | sort | xargs cat

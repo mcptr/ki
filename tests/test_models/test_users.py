@@ -106,3 +106,82 @@ class Test(ki.testing.ModelTest):
             assert(ok)
             fetched = ki.models.users.get(tx, self.user, active_only=False)
             assert(fetched)
+
+    def test_get_by_email(self):
+        self.user.email = "get-by-email@localhost"
+        with self.pgsql.transaction() as tx:
+            r = ki.models.users.create(tx, self.user)
+            assert(r.id)
+            self.user.id = r.id
+
+        with self.pgsql.transaction() as tx:
+            fetched = ki.models.users.get_by_email(tx, self.user)
+            assert(fetched)
+
+            ok = ki.models.users.delete(tx, self.user, keep_username=False)
+            assert(ok)
+
+            fetched = ki.models.users.get_by_email(
+                tx, self.user, active_only=False
+            )
+
+            fetched = ki.models.users.get_by_email(tx, self.user)
+            assert(not fetched)
+
+    def test_get_user_info(self):
+        with self.pgsql.transaction() as tx:
+            r = ki.models.users.create(tx, self.user)
+            assert(r.id)
+            self.user.id = r.id
+
+        with self.pgsql.transaction() as tx:
+            fetched = ki.models.users.get_user_info(tx, self.user)
+            assert(fetched.name == self.user.name)
+            ok = ki.models.users.delete(tx, self.user, keep_username=False)
+            assert(ok)
+            fetched = ki.models.users.get_user_info(tx, self.user)
+            assert(not fetched)
+
+    def test_authenticate_valid(self):
+        self.user.password = "password"
+
+        with self.pgsql.transaction() as tx:
+            r = ki.models.users.create(tx, self.user)
+            assert r.id
+
+            session_id = str(uuid.uuid1())
+            r = users.authenticate(
+                username,
+                password,
+                session_id=session_id
+            )
+            assert r
+
+        sess = Session(session_id)
+        cached = sess.get("user_id", "ctime")
+        assert cached
+        self.assertEqual(r.id, cached[0])
+
+    # def test_authenticate_invalid(self):
+    #     username = "test-authenticate-invalid"
+    #     password = "password"
+
+    #     r = users.create(
+    #         username,
+    #         password,
+    #         cursor_type=tuple,
+    #     )
+
+    #     assert r.id
+
+    #     r = users.authenticate(
+    #         username,
+    #         "INVALID",
+    #     )
+    #     assert not r
+
+    #     r = users.authenticate(
+    #         "INVALID",
+    #         password,
+    #     )
+    #     assert not r

@@ -12,7 +12,8 @@ import ki.pgsql
 import ki.tasks
 
 import ki.config.testing as config
-# import schzd.models.users
+
+import ki.models.users
 
 
 ki.logg.configure(debug=config.DEBUG)
@@ -83,3 +84,10 @@ class ModelTest(unittest.TestCase):
 
     def setUp(self):
         self.log.debug("Setting up")
+
+    def debug_dump_users(self):
+        with self.pgsql.transaction() as tx:
+            tx.execute("select * from auth.users")
+            for r in tx.fetchall():
+                u = ki.models.users.User(**r._asdict())
+                print(u.as_dict())
