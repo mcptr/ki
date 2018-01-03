@@ -1,0 +1,44 @@
+{% extends "profile/dashboard.jinja2" %}
+
+
+{% block dashboard_body %}
+	<div class="profile current-email">
+		{% if user.email %}
+			{{email(user.email)}} {{"" if user.email_verified_on else "(not verified)"}}
+			<br/>
+			<a href="{{url_for('profile.remove_email_form')}}" class="">
+				Remove
+			</a>
+			
+			{% if not user.email_verified_on %}
+				|
+				<a href="{{url_for('profile.send_email_verification')}}" class="">
+					Resend verification email
+				</a>
+			{% endif %}
+		{% else %}
+			No email address assigned.
+		{% endif %}
+	</div>
+
+	<hr/>
+
+	<div class="profile email-form">
+		{% set result = (view.action_result or dict()) %}
+		{% set form_data = (dict() if not result else result.input_data) %}
+		{% set is_error = (result.status == False) %}
+
+		<form action="" method="POST" name="email-form" accept-charset="UTF-8">
+			<input type="email" name="email"
+				   placeholder="email"
+				   class="u-full-width {{'i-error' if is_error else ''}}"
+				   value="{{form_data.email}}"
+				   maxlength="512" required/>
+			<input type="submit" value="Update email" class="button button-primary"/>
+			{{_forms.csrf_form_input()}}
+			<p class="hint">
+				We will send verification email to the provided address.
+			</p>
+		</form>
+	</div>
+{% endblock dashboard_body %}

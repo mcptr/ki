@@ -1,0 +1,36 @@
+{% extends "base/index.jinja2" %}
+
+{% macro render_dashboard_menu(menu) %}
+	{% for entry in menu %}
+		<section>
+			<div class="title">{{entry.section}}</div>
+			<ul class="unstyled">
+				{% for item in entry.elements %}
+					<li><a href="{{item.href}}">{{item.caption}}</a></li>
+				{% endfor %}
+			</ul>
+		</section>
+	{% endfor %}
+{% endmacro %}	
+
+
+{% block body %}
+	<div class="dashboard row">
+		<div class="four columns menu">
+			{{render_dashboard_menu(view.dashboard_menu)}}
+		</div>
+		<div class="eight columns">
+			{{_actions.render_message(view.action_result)}}
+			<div class="body">
+				{% block dashboard_body %}
+					{{_users.user_info(view.info)}}
+					<br/>
+					{% if user.email and not user.email_verified_on %}
+						<a href="{{url_for('profile.edit_email')}}">Verify your email</a>.
+					{% endif %}
+			{% endblock dashboard_body %}
+			</div>
+		</div>
+	</div>
+
+{% endblock body %}

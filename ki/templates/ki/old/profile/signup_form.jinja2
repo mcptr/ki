@@ -1,0 +1,35 @@
+{% extends "base/index.jinja2" %}
+
+{% block body %}
+	<div class="container box auth signup-form">
+		<h3>Sign-up</h3>
+
+		{{_actions.render_message(view.action_result)}}
+		{% set form_data = (dict() if not view.action_result else view.action_result.input_data) %}
+
+		<form action="" method="POST" name="signup-form" accept-charset="UTF-8">
+			<div class="u-full-width">
+				<input type="text" name="username"
+					   placeholder="username" class="u-full-width" value="{{form_data.username}}"
+					   maxlength="32" required/>
+			</div>
+			<div class="u-full-width">
+				<input type="email" name="email"
+					   placeholder="email (optional)" class="u-full-width"
+					   maxlength="512" value="{{form_data.email or ''}}"/>
+			</div>
+			<div class="u-full-width">
+				<input type="password" name="password"
+					   placeholder="password (min. 6 characters)" class="u-full-width"
+					   maxlength="256" value="" autocomplete="off" required/>
+			</div>
+			<input type="submit" value="Sign-up" class="button button-primary"/>
+			{{_forms.csrf_form_input()}}
+			<p class="hint">
+				Email address is optional, however without it your account cannot be recovered
+				if your password is lost.
+				Please read our <a href="#">privacy policy</a>.
+			</p>
+		</form>
+	</div>
+{% endblock body %}

@@ -56,7 +56,7 @@ class Api:
         except ki.errors.Error as e:
             # self.log.exception(e)
             raise
-        except Exception as e:
+        except psycopg2.Error as e:
             self.log.error(e)
             raise ki.errors.DatabaseError(e)
         finally:

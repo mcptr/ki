@@ -1,0 +1,52 @@
+{% extends "base/index.jinja2" %}
+{% import "_macros/posts.jinja2" as _posts %}
+
+{% block body %}
+	<div class="posts index">
+		{{_actions.render_errors(view.action_result)}}
+
+		{% if view.listing_title %}
+			<h3>{{view.listing_title}}</h3>
+		{% endif %}
+
+		{% if not view.posts %}
+			<h3>No posts</h3>
+		{% endif %}
+		
+		{% for post in view.posts %}
+			<div class="row">
+				{# <div class="three columns img"> #}
+				{# 	<a href="{{post.url or url_for('post.show, post_id=post.id)}}"> #}
+				{# 		{% if post.thumbnail_path %} #}
+				{# 			<img src="{{url_for('static', filename='storage/thumbnails/' + post.thumbnail_path)}}" alt="?"/> #}
+				{# 		{% else %} #}
+				{# 			? #}
+				{# 		{% endif %} #}
+				{# 	</a> #}
+				{# </div> #}
+				
+				<div class="twelve columns details">
+					<div>
+						{% set details_url = url_for("post.show", post_id=post.id, slug=post.slug) %}
+						{% if post.content %}
+							<a href="{{details_url}}" class="title">{{post.title}}</a>
+						{% else %}
+							<a href="{{post.url or details_url}}" class="title">{{post.title}}</a>
+						{% endif %}
+						{{_posts.render_edit_url(post, user)}}
+						{{_posts.render_tags_div(post)}}
+					</div>
+
+					{{_posts.render_meta(post, user)}}
+
+					<div class="description">
+						{{post.description or ""}}
+					</div>
+				</div>
+			</div>
+			<br/>
+		{% endfor %}
+
+		<hr/>
+		{{_posts.render_pagination(view.pagination)}}
+{% endblock body %}

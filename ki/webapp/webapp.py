@@ -1,6 +1,10 @@
 import flask
+import flask_session
 from collections import namedtuple
+from functools import partial
 import ki.logg
+import ki.cache
+from . import hooks
 
 
 class FlaskApp(flask.Flask):
@@ -15,8 +19,17 @@ class Webapp:
         self.log = ki.logg.get(__name__)
         self.config = config
         self.api = api
-        self.flask_app = FlaskApp(__name__)
+        self.flask_app = FlaskApp(
+            __name__,
+            template_folder=self.config.TEMPLATE_FOLDER,
+            static_folder=self.config.STATIC_FOLDER,
+        )
         self.flask_app.config.from_object(config)
+        self.extensions = dict()
+        self.init_extensions()
+        self.register_before_request_hooks(None, [
+            hooks.load_user
+        ])
 
     def mk_view(self, cls, *args, **kwargs):
         vargs = tuple([self.api, *args])
@@ -40,3 +53,24 @@ class Webapp:
 
     def get_wsgi_app(self):
         return self.flask_app
+
+    def register_before_request_hooks(self, bp, funcs):
+        """Pass bp=None to make it for all blueprints"""
+        current = []
+        if not bp:
+            current = self.flask_app.before_request_funcs.get(None, [])
+        current.extend(funcs)
+        current = map(lambda f: partial(f, self.api), current)
+        self.flask_app.before_request_funcs[bp] = current
+
+    def init_extensions(self):
+        session_config = dict(
+            SESSION_TYPE="redis",
+            SESSION_REDIS=self.api.cache.get_connection()
+        )
+        self.flask_app.config.update(session_config)
+        session = flask_session.Session(self.flask_app)
+
+        self.extensions.update(
+            session=session,
+        )

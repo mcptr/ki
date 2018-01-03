@@ -27,7 +27,7 @@ CREATE TABLE auth.recovery (
 
 CREATE TABLE auth.sessions (
        id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
-       user_id UUID NOT NULL REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+       user_id UUID DEFAULT NULL REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE CASCADE,
        user_agent VARCHAR(1024) DEFAULT NULL,
        max_age_sec INTEGER NOT NULL DEFAULT 0,
        terminated BOOLEAN NOT NULL DEFAULT FALSE,

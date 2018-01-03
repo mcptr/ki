@@ -96,6 +96,21 @@ def touch(tx, session):
     return r.id if r else None
 
 
+def load(tx, session):
+    sql = (
+        "SELECT s.*"
+        "  FROM auth.sessions s"
+        "  LEFT JOIN auth.users u"
+        "  ON u.id = s.user_id"
+        "  WHERE s.id = %s AND s.terminated = false"
+        "  AND u.id = %s AND u.is_active AND u.is_closed = false"
+        "  AND EXTRACT('EPOCH' FROM NOW())::INTEGER - EXTRACT('EPOCH' FROM s.mtime)::INTEGER >= s.max_age_sec "
+    )
+    tx.execute(sql, (session.id, session.user_id))
+    r = tx.fetchone()
+    return r
+
+
 def terminate(tx, session):
     sql = (
         "UPDATE auth.sessions AS s SET mtime = NOW(), terminated = true"

@@ -1,3 +1,4 @@
+import flask
 import flask.views
 import ki.logg
 
@@ -5,17 +6,27 @@ import ki.logg
 log = ki.logg.get(__name__)
 
 
-class View(flask.views.View):
+class BaseView:
     route = None
+    nav = []
 
     def __init__(self, api, *args, **kwargs):
-        super().__init__()
         self.api = api
 
+    def render_template(self, tpl, **kwargs):
+        kwargs.update(nav=kwargs.pop("nav", self.nav))
+        kwargs.update(user=kwargs.pop("user", flask.g.user))
+        kwargs.update(session=kwargs.pop("session", flask.g.session))
+        return flask.render_template(tpl, view=kwargs)
 
-class MethodView(flask.views.MethodView):
-    route = None
 
+class View(BaseView, flask.views.View):
     def __init__(self, api, *args, **kwargs):
-        super().__init__()
-        self.api = api
+        BaseView.__init__(self, api, *args, **kwargs)
+        flask.views.View.__init__(self)
+
+
+class MethodView(BaseView, flask.views.MethodView):
+    def __init__(self, api, *args, **kwargs):
+        BaseView.__init__(self, api, *args, **kwargs)
+        flask.views.View.__init__(self)

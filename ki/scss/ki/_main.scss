@@ -1,0 +1,72 @@
+@import "skeleton/normalize";
+@import "skeleton/skeleton";
+
+@import "ki/variables";
+@import "ki/apps/users";
+
+
+body {
+    a {
+	text-decoration: none;
+    }
+    background: $color-bg;
+    font-size: 1.8rem;
+    text-shadow: 1px 1px 1px #eee;
+
+    .logo {
+	font-size: 4rem;
+	border-bottom: 1px solid #ddd;
+
+	a {
+	    color: #000;
+
+	    &:hover {
+		color: #666;
+	    }
+	}
+    }
+
+    .body-content {
+	margin-top: 2rem;
+	margin-bottom: 4rem;
+    }
+
+    .footer {
+	border-top: 3px solid #ddd;
+	min-height: 2rem;
+
+	ul li {
+	    display: inline;
+	    padding-left: 1rem;
+	}
+    }
+
+    .i-error {
+	border: 1px solid darkred;
+    }
+
+    .error {
+	color: darkred;
+	font-weight: bold;
+    }
+
+    .success {
+	color: green;
+	font-weight: bold;
+    }
+
+    .hint {
+	color: #999;
+	text-shadow: none;
+    }
+
+    .warning {
+	color: orange;
+	font-weight: bold;
+	text-shadow: none;
+
+    }
+}
+
+@media (min-width: 1200px) {
+}

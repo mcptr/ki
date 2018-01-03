@@ -1,0 +1,38 @@
+{% extends "base/index.jinja2" %}
+{% import "_macros/posts.jinja2" as _posts %}
+
+{% block body %}
+	{% set comments_anchor_id = "comments-" + view.post.id|string %}
+	<div class="posts post">
+		<div class="details">
+			<div>
+				<a href="{{view.post.url or url_for('post.show', post_id=view.post.id, slug=view.post.slug)}}" class="title">
+					{{view.post.title}}
+				</a>
+				
+				{{_posts.render_edit_url(view.post, user)}}
+				{{_posts.render_tags_div(view.post)}}
+			</div>
+
+			{{_posts.render_meta_post(view.post, user)}}
+
+			<div class="description">
+				{{view.post.description or ""}}
+			</div>
+		</div>
+
+		{% if view.post.content %}
+			<div class="post-content u-full-width">
+				{{_content.render_markdown(view.post.content)}}
+			</div>
+		{% endif %}
+
+		{{_posts.render_new_comment_form(view, request, user)}}
+		
+
+		<div class="comments u-full-width" id="{{comments_anchor_id}}">
+			<hr/>
+			{{_posts.render_comments(view, request, user, view.comments)}}
+		</div>
+	</div>
+{% endblock body %}
