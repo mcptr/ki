@@ -1,0 +1,10 @@
+{% macro user_link(username) %}
+    {% if username %}
+        <a href="{{url_for('users.user', name=username|quote_plus)}}"
+           class="user">
+           {{username}}
+        </a>
+    {% else %}
+        -
+    {% endif %}
+{% endmacro %}

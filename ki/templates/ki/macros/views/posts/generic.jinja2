@@ -1,0 +1,42 @@
+{% import "ki/macros/views/users.jinja2" as _users %}
+
+
+{% macro title(post) %}
+	{% set details_url = url_for("post.post", post_id=post.id, slug=post.slug) %}
+	<a href="{{details_url}}" class="title">{{post.title}}</a> 
+	{# {% if post.content %} #}
+	{# 	<a href="{{details_url}}" class="title">{{post.title}}</a> #}
+	{# {% else %} #}
+	{# <a href="{{post.url or details_url}}" class="title">{{post.title}}</a> #}
+	{# {% endif %} #}
+{% endmacro %}
+
+
+{% macro source(post) %}
+	{% if post.source_domain %}
+		| <a href="{{post.url}}" class="source">{{post.source_domain}}</a>
+	{% endif %}
+{% endmacro %}
+
+
+{% macro meta(post, user) %}
+	<div class="meta">
+		{{_users.user_link(post.author)}} |
+		{{post.ctime|to_ago_string}} |
+		<a href="{{url_for('post.post', post_id=post.id, slug=post.slug)}}"> 
+			comments: {{post.total_comments or 0}} 
+		</a> 
+		{{source(post)}}
+	</div>
+{% endmacro %}
+
+
+{% macro description(post) %}
+	{{post.description}}
+{% endmacro %}
+
+{% macro content(post) %}
+	<section>
+		{{post.content}}
+	</section>
+{% endmacro %}

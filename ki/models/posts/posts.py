@@ -1,12 +1,11 @@
 import time
-import schzd.core.logg
-from schzd.core.pgsql import pg_cursor
 from urllib.parse import urlparse, quote_plus
-from schzd.validators import validate_url
-from schzd.web.utils import mk_slug
+
+import ki.logg
+from ki.web.utils import mk_slug
 
 
-log = schzd.core.logg.get(__name__)
+log = ki.logg.get(__name__)
 
 
 COL_DEF = (
@@ -71,42 +70,29 @@ def __prepare_post(p):
     return p
 
 
-def get_recent(page_idx=0, **kwargs):
-    limit = kwargs.get("limit", DEFAULT_LIMIT)
-    offset = page_idx * limit
-
-    with pg_cursor() as cursor:
-        cursor.execute(STMT_GET_RECENT, (limit, offset))
-        r = cursor.fetchall()
-        return list(map(__prepare_post, r))
+def get_recent(tx, offset=0, limit=DEFAULT_LIMIT):
+    tx.execute(STMT_GET_RECENT, (limit, offset))
+    r = tx.fetchall()
+    return list(map(__prepare_post, r))
 
 
-def get_posts_by_tag(tag, page_idx=0, **kwargs):
-    limit = kwargs.get("limit", DEFAULT_LIMIT)
-    offset = page_idx * limit
-
-    with pg_cursor() as cursor:
-        cursor.execute(STMT_GET_BY_TAG, (tag, limit, offset))
-        return list(map(__prepare_post, cursor.fetchall()))
+def get_posts_by_tag(tx, tag, offset=0, limit=DEFAULT_LIMIT):
+    tx.execute(STMT_GET_BY_TAG, (tag, limit, offset))
+    return list(map(__prepare_post, tx.fetchall()))
 
 
-def get_posts_by_user(username, page_idx=0, **kwargs):
-    limit = kwargs.get("limit", DEFAULT_LIMIT)
-    offset = page_idx * limit
-
-    with pg_cursor() as cursor:
-        cursor.execute(STMT_GET_BY_USER, (username, limit, offset))
-        return list(map(__prepare_post, cursor.fetchall()))
+def get_posts_by_user(tx, username, offset=0, limit=DEFAULT_LIMIT):
+    tx.execute(STMT_GET_BY_USER, (username, limit, offset))
+    return list(map(__prepare_post, tx.fetchall()))
 
 
-def get_post_by_id(id):
-    with pg_cursor() as cursor:
-        cursor.execute(STMT_GET_BY_ID, (id,))
-        post = cursor.fetchone()
-        return __prepare_post(post)
+def get_post_by_id(tx, id):
+    tx.execute(STMT_GET_BY_ID, (id,))
+    post = tx.fetchone()
+    return __prepare_post(post)
 
 
-def create(**kwargs):
+def create(tx, **kwargs):
     log.debug("Creating post: %s", kwargs["title"])
 
     data = dict(
@@ -119,16 +105,14 @@ def create(**kwargs):
 
     tags = kwargs.pop("tags", None)
 
-    with pg_cursor(cursor_type=tuple) as cursor:
-        cursor.execute(STMT_CREATE, data)
-        cursor.connection.commit()
-        post_id = cursor.fetchone()
-        if post_id and tags:
-            add_tags(post_id, tags)
-        return post_id
+    tx.execute(STMT_CREATE, data)
+    post_id = tx.fetchone()
+    if post_id and tags:
+        add_tags(post_id, tags)
+    return post_id
 
 
-def update(**kwargs):
+def update(tx, **kwargs):
     log.debug("Updating post: %d, %s", kwargs["id"], kwargs["title"])
 
     sql = (
@@ -142,47 +126,38 @@ def update(**kwargs):
 
     tags = kwargs.pop("tags", None)
 
-    with pg_cursor(cursor_type=tuple) as cursor:
-        cursor.execute(sql, kwargs)
-        cursor.connection.commit()
-        r = cursor.fetchone()
-        if r:
-            replace_tags(r.id, tags)
-        return r
+    tx.execute(sql, kwargs)
+    r = tx.fetchone()
+    if r:
+        replace_tags(r.id, tags)
+    return r
 
 
-def delete(id):
-    with pg_cursor(cursor_type=tuple) as cursor:
-        cursor.execute(STMT_DELETE, (id,))
-        cursor.connection.commit()
-        return cursor.fetchone()
+def delete(tx, id):
+    tx.execute(STMT_DELETE, (id,))
+    return tx.fetchone()
 
 
-def add_tags(post_id, tags):
+def add_tags(tx, post_id, tags):
     tags = list(set(filter(lambda t: t, tags)))
     if not tags:
         return
-    with pg_cursor(cursor_type=tuple) as cursor:
-        cursor.execute(STMT_ADD_TAGS, (post_id, tags))
-        cursor.connection.commit()
-        return cursor.fetchone()
+
+    tx.execute(STMT_ADD_TAGS, (post_id, tags))
+    return tx.fetchone()
 
 
-def remove_tags(post_id, tags):
+def remove_tags(tx, post_id, tags):
     tags = list(set(filter(lambda t: t, tags)))
     if not tags:
         return
-    with pg_cursor(cursor_type=tuple) as cursor:
-        cursor.execute(STMT_REMOVE_TAGS, (post_id, tags))
-        cursor.connection.commit()
-        return cursor.fetchone()
+    tx.execute(STMT_REMOVE_TAGS, (post_id, tags))
+    return tx.fetchone()
 
 
-def replace_tags(post_id, new_tags):
-    with pg_cursor(cursor_type=tuple) as cursor:
-        cursor.execute(
-            "DELETE FROM posts.tags WHERE post_id = %s",
-            (post_id, )
-        )
-        cursor.connection.commit()
-        add_tags(post_id, new_tags)
+def replace_tags(tx, post_id, new_tags):
+    tx.execute(
+        "DELETE FROM posts.tags WHERE post_id = %s",
+        (post_id, )
+    )
+    add_tags(post_id, new_tags)

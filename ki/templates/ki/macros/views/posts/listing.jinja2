@@ -1,0 +1,36 @@
+{% import "ki/macros/views/posts/generic.jinja2" as _posts %}
+{% import "ki/macros/views/tags.jinja2" as _tags %}
+
+
+{% macro listing(view) %}
+	<div class="posts listing">
+		{% if not view.posts %}
+			<h3>{{_("No posts")}}</h3>
+		{% else %}
+			<ul>
+			{% for post in view.posts %}
+				<li>
+					<div class="row">
+						<div class="title">
+							{{_posts.title(post)}}
+						</div>
+
+						<div class="meta">
+							{{_posts.meta(post)}}
+						</div>
+
+						<div class="tags">
+							{{_tags.tags_list(post.tags)}}
+						</div>
+
+						<div class="description">
+							{{_posts.description(post)}}
+						</div>
+						<br/>
+					</div>
+				</li>
+			{% endfor %}
+			</ul>
+		{% endif %}
+	</div>
+{% endmacro %}

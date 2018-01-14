@@ -10,6 +10,8 @@ def get_base_dir(f):
 
 TESTING = False
 DEBUG = False
+TEMPLATES_AUTO_RELOAD = True
+
 
 SESSION_USE_SIGNER = True
 SESSION_COOKIE_SECURE = True
@@ -38,3 +40,10 @@ CELERY = dict(
     result_backend="redis://localhost:6379/2",
     enable_utc=True,
 )
+
+LANGUAGES = {
+    "en_US": "English",
+}
+
+BABEL_DEFAULT_LOCALE = "en_US"
+BABEL_TRANSLATION_DIRECTORIES = "app/i18n"

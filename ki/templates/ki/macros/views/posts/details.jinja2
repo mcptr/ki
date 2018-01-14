@@ -1,0 +1,35 @@
+{% import "ki/macros/views/posts/generic.jinja2" as _post %}
+{% import "ki/macros/views/tags.jinja2" as _tags %}
+{% import "ki/macros/content.jinja2" as _content %}
+
+
+{% macro details(view) %}
+	<div class="post details">
+		{% if not view.post %}
+			<h3>{{_("Post not found")}}</h3>
+		{% else %}
+			{% set post = view.post %}
+			<div class="row">
+				<div class="title">
+					{{_post.title(post)}}
+				</div>
+
+				<div class="meta">
+					{{_post.meta(post)}}
+				</div>
+
+				<div class="tags">
+					{{_tags.tags_list(post.tags)}}
+				</div>
+
+				<div class="description">
+					{{_post.description(post)}}
+				</div>
+				
+				<div class="content u-full-width">
+					{{_content.markdown(post.content)}}
+				</div>
+			</div>
+		{% endif %}
+	</div>
+{% endmacro %}

@@ -1,0 +1,79 @@
+{% import "ki/macros/nav.jinja2" as _nav %}
+{% import "ki/macros/content.jinja2" as _content %}
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8"/>
+		<meta name="description" content=""/>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+		<title>
+			{% block title %}
+				{{title}}
+			{% endblock %}
+			{% block subtitle %}
+				{% if subtitle %} - {{subtitle}}{% endif %}
+			{% endblock %}
+		</title>
+
+		<link rel="stylesheet" type="text/css"
+			  href="{{url_for('static', filename='gen/css/main.css')}}">
+	</head>
+	<body>
+		<section class="container">
+			<div class="logo">
+				<a href="/">
+					{% block logo %}
+						KI
+					{% endblock logo %}
+				</a>
+			</div>
+			<div class="nav">
+				{% block nav %}
+					{{ _nav.view_menu(view) }}
+				{% endblock %}
+			</div>
+		</section>
+
+		<section class="container">
+			<div class="body-content">
+				{% block view_title %}
+					{% if view.title %}
+						<h3>{{view.title}}</h3>
+					{% endif %}
+				{% endblock %}
+
+				{% block pagination_top %}
+					{% if view.pagination %}
+						{{_content.pagination(view.pagination)}}
+					{% endif %}
+				{% endblock %}
+				
+				{% block main_view %}
+				{% endblock main_view %}
+
+				{% block pagination_bottom %}
+					{% if view.pagination %}
+						{{_content.pagination(view.pagination)}}
+					{% endif %}
+				{% endblock %}
+			</div>
+		</section>
+
+		<section class="container">
+			<div class="footer">
+				{% block footer %}
+					<div class="u-pull-left">
+						{% block left_footer %}
+						{% endblock %}
+					</div>
+					<div class="u-pull-right">
+						{% block right_footer %}
+						{% endblock %}
+					</div>
+				{% endblock footer %}
+			</div>
+		</section>
+	</body>
+</html>

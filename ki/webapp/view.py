@@ -13,11 +13,12 @@ class BaseView:
     def __init__(self, api, *args, **kwargs):
         self.api = api
 
-    def render_template(self, tpl, **kwargs):
+    def mk_response(self, **kwargs):
+        template = kwargs.pop("template", None)
         kwargs.update(nav=kwargs.pop("nav", self.nav))
         kwargs.update(user=kwargs.pop("user", flask.g.user))
         kwargs.update(session=kwargs.pop("session", flask.g.session))
-        return flask.render_template(tpl, view=kwargs)
+        return flask.render_template(template, view=kwargs)
 
 
 class View(BaseView, flask.views.View):

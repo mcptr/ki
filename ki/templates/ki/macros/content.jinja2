@@ -1,0 +1,34 @@
+{% macro pagination(pagination) %}
+	<div class="pagination">
+		{% if pagination.prev_page_url %}
+			<a href="{{pagination.prev_page_url}}" class="">
+				&laquo; {{_("Page %(page)s", page=pagination.prev_page_number)}}
+			</a>
+		{% endif %}
+		{% if pagination.prev_page_url and pagination.next_page_url %} ... {% endif %}
+		{% if pagination.next_page_url %}
+			<a href="{{pagination.next_page_url}}" class="">
+				{{_("Page %(page)s", page=pagination.next_page_number)}} &raquo;
+			</a>
+		{% endif %}
+	</div>
+</div>
+{% endmacro %}
+
+
+{% macro markdown(value) %}
+	{% if value %}
+		{% autoescape false %}
+			{{value|escape|md_to_html}}
+		{% endautoescape %}
+	{% endif %}
+{% endmacro %}
+
+
+{% macro formatting_help_link() %}
+	<a href="{{url_for('help.content_formatting')}}"
+	   target="_blank"
+	   title="Opens in new tab">
+		Formatting help
+	</a>
+{% endmacro %}
