@@ -90,4 +90,4 @@ class ModelTest(unittest.TestCase):
             tx.execute("select * from auth.users")
             for r in tx.fetchall():
                 u = ki.models.users.User(**r._asdict())
-                print(u.as_dict())
+                print("USER DUMP", u.as_dict())

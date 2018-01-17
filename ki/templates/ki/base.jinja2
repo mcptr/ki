@@ -22,17 +22,26 @@
 	</head>
 	<body>
 		<section class="container">
-			<div class="logo">
-				<a href="/">
-					{% block logo %}
-						KI
-					{% endblock logo %}
-				</a>
+				{% block logo %}
+					<div class="logo">
+						<a href="/">KI</a>
+					</div>
+				{% endblock logo %}
 			</div>
-			<div class="nav">
-				{% block nav %}
+			<nav class="nav top">
+				{% block nav_top %}
 					{{ _nav.view_menu(view) }}
+					{{ _nav.user_nav(view) }}
+					<br/>
 				{% endblock %}
+			</nav>
+			<div class="u-cf">
+				<nav class="subnav">
+					{% block subnav %}
+						{{ _nav.render_nav(view.subnav) }}
+						<br/>
+					{% endblock %}
+				</nav>
 			</div>
 		</section>
 
@@ -44,11 +53,11 @@
 					{% endif %}
 				{% endblock %}
 
-				{% block pagination_top %}
-					{% if view.pagination %}
-						{{_content.pagination(view.pagination)}}
-					{% endif %}
-				{% endblock %}
+				{# {% block pagination_top %} #}
+				{# 	{% if view.pagination %} #}
+				{# 		{{_content.pagination(view.pagination)}} #}
+				{# 	{% endif %} #}
+				{# {% endblock %} #}
 				
 				{% block main_view %}
 				{% endblock main_view %}
@@ -70,6 +79,7 @@
 					</div>
 					<div class="u-pull-right">
 						{% block right_footer %}
+							{{ _nav.footer_nav(view) }}
 						{% endblock %}
 					</div>
 				{% endblock footer %}

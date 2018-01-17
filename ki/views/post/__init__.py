@@ -12,13 +12,13 @@ def create_app(webapp, **kwargs):
 
     app.add_url_rule(
         "/<int:post_id>",
-        "post_without_slug",
+        "details_without_slug",
         view_func=webapp.mk_view(views.PostDetails)
     )
 
     app.add_url_rule(
         "/<int:post_id>/<string:slug>",
-        "post",
+        "details",
         view_func=webapp.mk_view(views.PostDetails)
     )
 

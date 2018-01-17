@@ -1,12 +1,11 @@
 import time
-import schzd.core.cache
 
 
 class Session:
-    def __init__(self, id, ttl=(3600 * 24)):
+    def __init__(self, redis_conn, id, ttl=(3600 * 24)):
         self.id = id
         self.ttl = ttl
-        self.redis = schzd.core.cache.get_connection()
+        self.redis = redis_conn
         self.cache_key = "user:session:%s" % self.id
 
     def update(self, **mapping):
@@ -18,7 +17,7 @@ class Session:
     def remove(self, k):
         return self.redis.hdel(self.cache_key, k)
 
-    def get(self, *args):
+    def get_fields(self, *args):
         return list(
             map(
                 lambda v:

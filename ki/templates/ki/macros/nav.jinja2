@@ -1,6 +1,6 @@
 {% macro view_menu(view) %}
-	{% if view.menu %}
-		<ul class="view-menu u-pull-left">
+	{% if view.nav %}
+		<ul class="unstyled view-menu u-pull-left">
 			{% for item in view.nav %}
 				<li><a href="{{item.href}}">{{item.caption}}</a></li>
 			{% endfor %}
@@ -9,19 +9,41 @@
 {% endmacro %}
 
 
-{# {% macro render_profile_menu(menu, user) %} #}
-{# 	<ul class="right-menu"> #}
-{# 		{% if user.id %} #}
-{# 			<li> #}
-{# 				<a href="{{url_for('profile.dashboard')}}"> #}
-{# 					{{user_name(user.name)}} #}
-{# 				</a> #}
-{# 			</li> #}
-{# 			{% for item in menu %} #}
-{# 				<li><a href="{{item.href}}">{{item.caption}}</a></li> #}
-{# 			{% endfor %} #}
-{# 		{% else %} #}
-{# 			<li><a href="{{url_for('profile.login')}}">Login</a></li> #}
-{# 		{% endif %} #}
-{# 	</ul> #}
-{# {% endmacro %} #}
+{% macro user_nav(view) %} 
+	<ul class="unstyled profile-menu u-pull-right"> 
+		{% if view.user.id %} 
+			<li> 
+				<a href="{{url_for('profile.main')}}"> 
+					{{user_name(view.user.name)}} 
+				</a> 
+			</li> 
+			{% for item in view.user_nav %} 
+				<li><a href="{{item.href}}">{{item.caption}}</a></li> 
+			{% endfor %} 
+		{% else %} 
+			<li><a href="{{url_for('profile.login')}}">{{_("Login")}}</a></li> 
+		{% endif %} 
+	</ul> 
+{% endmacro %} 
+
+
+{% macro footer_nav(view) %}
+	{% if view.footer %}
+		<ul class="unstyled footer-nav">
+			{% for item in view.footer %}
+				<li><a href="{{item.href}}">{{item.caption}}</a></li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+{% endmacro %}
+
+
+{% macro render_nav(items) %}
+	{% if items %}
+		<ul class="unstyled u-pull-left">
+			{% for item in items %}
+				<li><a href="{{item.href}}">{{item.caption}}</a></li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+{% endmacro %}  

@@ -1,0 +1,12 @@
+{% macro main_menu(items) %}
+    {% for entry in items %}
+        <section>
+            <div class="title">{{entry.section}}</div>
+            <ul class="unstyled">
+                {% for item in entry.elements %}
+                    <li><a href="{{item.href}}">{{item.caption}}</a></li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endfor %}
+{% endmacro %}  

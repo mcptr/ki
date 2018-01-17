@@ -1,5 +1,4 @@
 import flask
-import flask_session
 import flask_babel
 import jinja2
 from collections import namedtuple
@@ -8,6 +7,7 @@ from functools import partial
 import ki.logg
 import ki.cache
 import ki.web.filters
+import ki.web.jinja_extensions
 from . import hooks
 
 
@@ -29,17 +29,21 @@ class Webapp:
             static_folder=self.config.STATIC_FOLDER,
         )
         self.flask_app.config.from_object(config)
-        self.flask_app.config.update(TEMPLATES_AUTO_RELOAD=True)
 
         self.extensions = dict()
         self.init_extensions()
-        self.register_before_request_hooks(None, [
+        before_request_hooks = [
+            hooks.remove_expired_sessions,
             hooks.load_user,
             hooks.csrf_protect,
-            hooks.debug,
-        ])
+        ]
+        if self.config.DEBUG:
+            before_request_hooks.append(hooks.debug_mode_hooks)
+
+        self.register_before_request_hooks(None, before_request_hooks)
 
         ki.web.filters.register(self.flask_app)
+        ki.web.jinja_extensions.register(self.flask_app)
 
     def mk_view(self, cls, *args, **kwargs):
         vargs = tuple([self.api, *args])
@@ -79,18 +83,10 @@ class Webapp:
             default_for_string=True,
         )
 
-        session_config = dict(
-            SESSION_TYPE="redis",
-            SESSION_REDIS=self.api.cache.get_connection()
-        )
-        self.flask_app.config.update(session_config)
-        session = flask_session.Session(self.flask_app)
-
         babel = flask_babel.Babel(self.flask_app)
         babel.locale_selector_func = self.locale_selector
 
         self.extensions.update(
-            session=session,
             babel=babel,
         )
 

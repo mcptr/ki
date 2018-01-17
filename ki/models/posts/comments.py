@@ -1,6 +1,3 @@
-from schzd.core.pgsql import pg_cursor
-
-
 DEFAULT_LIMIT = 10
 
 
@@ -45,7 +42,7 @@ class Node:
         return dest
 
 
-def create(post_id, content, **kwargs):
+def create(tx, post_id, content, **kwargs):
     sql = (
         "INSERT INTO posts.comments ("
         "    post_id, user_id, parent_id, content"
@@ -53,44 +50,42 @@ def create(post_id, content, **kwargs):
         "         %(parent_id)s, %(content)s"
         "  ) RETURNING id"
     )
-    with pg_cursor(cursor_type=tuple) as cursor:
-        cursor.execute(sql, dict(
-            post_id=post_id,
-            user_id=kwargs.get("user_id", None),
-            parent_id=kwargs.get("parent_id", None),
-            content=content,
-        ))
-        cursor.connection.commit()
-        r = cursor.fetchone()
-        return r.id if r else None
+
+    tx.execute(sql, dict(
+        post_id=post_id,
+        user_id=kwargs.get("user_id", None),
+        parent_id=kwargs.get("parent_id", None),
+        content=content,
+    ))
+
+    r = tx.fetchone()
+    return r.id if r else None
 
 
-def update(comment_id, content, **kwargs):
+def update(tx, comment_id, content, **kwargs):
     sql = (
         "UPDATE posts.comments SET content = %s, mtime=NOW()"
         "   WHERE id = %s"
         "   RETURNING id"
     )
-    with pg_cursor(cursor_type=tuple) as cursor:
-        cursor.execute(sql, (content, comment_id))
-        cursor.connection.commit()
-        r = cursor.fetchone()
-        return r.id if r else None
+
+    tx.execute(sql, (content, comment_id))
+    r = tx.fetchone()
+    return r.id if r else None
 
 
-def delete(comment_id):
+def delete(tx, comment_id):
     sql = (
         "UPDATE posts.comments SET content = NULL, mtime=NOW(), deleted=true"
         "   WHERE id = %s"
         "   RETURNING id"
     )
-    with pg_cursor(cursor_type=tuple) as cursor:
-        cursor.execute(sql, (comment_id,))
-        cursor.connection.commit()
-        return cursor.fetchone()
+
+    tx.execute(sql, (comment_id,))
+    return tx.fetchone()
 
 
-def get_comments_tree(post_id):
+def get_comments_tree(tx, post_id):
     sql = (
         "SELECT * FROM posts.get_comments_tree(%s) AS ("
         "  id integer, username varchar, parent_id integer,"
@@ -99,41 +94,41 @@ def get_comments_tree(post_id):
         "  ctime integer, mtime integer,"
         "  depth integer, path integer[])"
     )
-    with pg_cursor() as cursor:
-        cursor.execute(sql, (post_id,))
 
-        threads = {}
-        threads_order = []
-        last_thread = None
+    threads = {}
+    threads_order = []
+    last_thread = None
 
-        for c in cursor.fetchall():
-            if not c.path:
-                threads[c.id] = Node(c._asdict())
-                threads_order.append(c.id)
-            else:
-                thread_id = c.path[0]
-                data = c._asdict()
-                data.update(path=c.path[1:])
-                threads[thread_id].insert(Node(data))
-        return dict(
-            children=threads,
-            order=threads_order
-        )
+    tx.execute(sql, (post_id,))
+
+    for c in tx.fetchall():
+        if not c.path:
+            threads[c.id] = Node(c._asdict())
+            threads_order.append(c.id)
+        else:
+            thread_id = c.path[0]
+            data = c._asdict()
+            data.update(path=c.path[1:])
+            threads[thread_id].insert(Node(data))
+    return dict(
+        children=threads,
+        order=threads_order
+    )
 
 
-def get(comment_id):
+def get(tx, comment_id):
     sql = (
         "SELECT id, parent_id, content, deleted,"
         "    ctime, mtime, user_id, post_id"
         "  FROM posts.comments"
         " WHERE id=%s"
     )
-    with pg_cursor() as cursor:
-        cursor.execute(sql, (comment_id,))
-        return cursor.fetchone()
+
+    tx.execute(sql, (comment_id,))
+    return tx.fetchone()
 
 
-def get_page(page_idx=0, **kwargs):
+def get_page(tx, page_idx=0, **kwargs):
     limit = kwargs.get("limit", DEFAULT_LIMIT)
     offset = page_idx * limit
 
@@ -152,6 +147,5 @@ def get_page(page_idx=0, **kwargs):
 
     # TODO: order by score. We need score.
 
-    with pg_cursor() as cursor:
-        cursor.execute(sql, (limit, offset,))
-        return cursor.fetchall()
+    tx.execute(sql, (limit, offset,))
+    return tx.fetchall()

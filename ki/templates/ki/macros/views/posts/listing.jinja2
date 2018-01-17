@@ -34,3 +34,21 @@
 		{% endif %}
 	</div>
 {% endmacro %}
+
+
+{% macro recent_user_posts(view, user) %}
+	<div class="posts">
+		<h4>{{_("Recent posts")}}</h4>
+		<div class="details">
+			{% for post in view.posts %}
+				<a href="{{url_for('post.details', post_id=post.id, slug=post.slug)}}" class="title">
+					{{post.title}}
+				</a>
+				{# {{render_edit_url(post, user)}} #}
+				{# {{render_meta(post, user)}} #}
+				{# {{render_tags_div(post.tags)}} #}
+				<br/>
+			{% endfor %}
+		</div>
+	</div>
+{% endmacro %}

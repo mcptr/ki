@@ -109,7 +109,7 @@ def get_by_email(tx, user, active_only=True, **kwargs):
     return tx.fetchone()
 
 
-def get_user_info(tx, user):
+def get_user_info(tx, name):
     sql = (
         "SELECT * FROM auth.get_user_info(%s)"
         "    AS (name VARCHAR,"
@@ -123,7 +123,7 @@ def get_user_info(tx, user):
         "       total_posts BIGINT,"
         "       total_comments BIGINT)"
     )
-    tx.execute(sql, (user.name, ))
+    tx.execute(sql, (name, ))
     r = tx.fetchone()
     return r if r.name else None
 
@@ -161,7 +161,7 @@ def authenticate(tx, user):
         "  AS(id UUID, name VARCHAR, ctime INTEGER, mtime INTEGER)"
     )
 
-    tx.execute(sql, (user.name, user.password))
+    tx.execute(sql, (str(user.name), str(user.password)))
     r = tx.fetchone()
     return r.id
 

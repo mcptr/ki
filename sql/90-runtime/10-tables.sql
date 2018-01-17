@@ -1,7 +1,9 @@
 CREATE TABLE runtime.actions(
        id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID DEFAULT NULL REFERENCES auth.users(id) ON UPDATE CASCADE ON DELETE SET NULL,
        name VARCHAR(256) DEFAULT NULL,
        status BOOLEAN DEFAULT FALSE,
+       message VARCHAR(2048) DEFAULT NULL,
        input_data JSONB DEFAULT NULL,
        result JSONB DEFAULT NULL,
        session_id VARCHAR(64) DEFAULT NULL,

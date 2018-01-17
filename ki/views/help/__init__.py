@@ -3,7 +3,7 @@ from . import views
 
 
 def create_app(webapp, **kwargs):
-    bp_name = "users"
+    bp_name = "help"
     app = flask.Blueprint(
         bp_name,
         __name__,
@@ -11,9 +11,9 @@ def create_app(webapp, **kwargs):
     )
 
     app.add_url_rule(
-        "/<string:name>",
-        "user",
-        view_func=webapp.mk_view(views.UserInfoView),
+        "/formatting",
+        "content_formatting",
+        view_func=webapp.mk_view(views.ContentFormatting)
     )
 
     webapp.register_blueprint(app, **kwargs)

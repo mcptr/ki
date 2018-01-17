@@ -1,3 +1,4 @@
+import uuid
 import flask
 import flask_session
 
@@ -9,35 +10,47 @@ import ki.models.users
 log = ki.logg.get(__name__)
 
 
+def remove_expired_sessions(app):
+    ki.models.sessions.remove_expired(app.api)
+
+
 def load_user(app):
-    log.info("Loading user")
     api = app.api
     flask.g.user = None
-    current_user_agent = flask.request.headers.get("user-agent", ""),
+    flask.g.session = None
+
+    session_id = flask.session.get("id", None)
+    if not session_id:
+        session_id = str(uuid.uuid4())
+        flask.session["id"] = session_id
+
+    current_user_agent = flask.request.headers.get("user-agent", "")
+
     sess = ki.models.sessions.Session(
-        id=flask.session.sid,
+        id=session_id,
         user_agent=current_user_agent,
     )
-
     with api.pgsql.transaction() as tx:
         r = ki.models.sessions.load(tx, sess)
-        flask.g.session = ki.models.sessions.Session(**r) if r else sess
-        if flask.g.session.terminated:
-            flask.abort(401)
 
-        if flask.g.session:
-            sua = flask.g.session.user_agent
-            ki.models.sessions.touch(tx, flask.g.session)
+        flask.g.session = ki.models.sessions.Session(**r._asdict()) if r else sess
+
+        sua = flask.g.session.user_agent
 
         if sua and (current_user_agent != sua):
-            log.error("Session user-agent mismatch. User id: %s ", user_id)
+            log.error("Session user-agent mismatch. Session id: %s ", flask.g.session.id)
             flask.abort(401)
-        else:
-            user_data = dict()
-            if flask.g.session.user_id:
-                u = ki.models.users.User(flask.g.session.user_id)
-                user_data = ki.models.users.load(u)
-            flask.g.user = ki.models.users.User(**user_data) if user_data else None
+
+        ki.models.sessions.touch(tx, flask.g.session)
+        user_data = dict()
+
+        if flask.g.session.user_id:
+            log.info("Loading user: %s", flask.g.session.user_id)
+            u = ki.models.users.User(id=flask.g.session.user_id)
+            user_data = ki.models.users.get(tx, u)
+            print(u.as_dict(), user_data)
+        flask.g.user = ki.models.users.User(**user_data._asdict()) if user_data else None
+        tx.connection.commit()
 
 
 def csrf_protect(*args, **kwargs):
@@ -48,12 +61,7 @@ def csrf_protect(*args, **kwargs):
             flask.abort(403)
 
 
-def require_login(app):
-    u = flask.g.user
-    if not (u and u.id and u.is_active and not u.is_deleted):
-        flask.abort(401)
-
-
-def debug(app):
+def debug_mode_hooks(app):
+    app.flask_app.config.update(TEMPLATES_AUTO_RELOAD=True)
     # fix for jinja fuckups.
     app.flask_app.jinja_env.cache = {}

@@ -1,0 +1,157 @@
+{% import "ki/macros/content.jinja2" as _content %}
+
+
+{% macro new_comment_form(view) %}
+    {% set anchor_id = view.post.id|string + "-new-comment" %}
+    <div class="new-comment-form" id="{{anchor_id}}">
+        <hr/>
+        {% if not view.user.id %}
+            <a href="{{url_for('profile.login', next_url=view.request.path, _anchor=anchor_id)}}">
+                {{_("Log in to leave a comment")}}
+            </a>
+        {% else %}
+            {% if action_result and action_result.status == False %}
+                <p class="error">{{action_result.result.error}}</p>
+            {% endif %}
+
+            {{_content.formatting_help_link()}}
+            <form action="{{url_for('post.save_comment')}}" method="POST" accept-charset="UTF-8">
+                <input type="hidden" name="post_id" value="{{view.post.id}}"/>
+                <textarea name="comment" class="u-full-width"></textarea>
+                <input type="submit" value="Comment" class="button-primary"/>
+                {{_forms.csrf_form_input()}}
+            </form>
+        {% endif %}
+    </div>
+{% endmacro %}
+
+
+{% macro single_comment(view, comment) %}
+	{% set request = view.request %}
+	{% set user = view.user %}
+	{% set anchor_id = "comment-" + comment.id|string %}
+    {% set anchor_id = "comment-" + comment.id|string %}
+    <div class="comment" id="{{anchor_id}}">
+        <div class="voting u-pull-left">
+            <a href="#" class="up-arrow"></a>
+        </div>
+        <div class="info">
+            {% if not comment.username %}
+                <span class="username">-</span>
+            {% else %}
+                <a class="user" href="{{url_for('users.user', name=comment.username)}}">{{comment.username}}</a>
+            {% endif %}
+            |
+            <span class="time">{{comment.ctime|to_ago_string}}</span>
+            |
+            <a href="#comment-{{comment.id|string}}">link</a>
+        </div>
+        <div class="content-wrapper">
+            {% if view.edit_comment_id == comment.id %}
+                {{render_edit_comment_form(view, user, comment)}}
+            {% else %}
+                <div class="content">
+                    {% if comment.deleted %}
+                        <span class="deleted">deleted {{comment.mtime|ts_to_datetime_str}}</span>
+                    {% else %}
+                        {{_content.markdown(comment.content)}}
+                    {% endif %}
+                </div>
+            {% endif %}
+            {% if not comment.deleted %}
+                <div class="actions">
+                    {% set login_url = url_for("profile.login", next_url=request.path, _anchor=anchor_id) %}
+                    {% if comment.content and (view.reply_to_id != comment.id) %}
+                        {% if user.id %}
+                            {% set reply_url = url_for("post.details", post_id=view.post.id, slug=view.post.slug, reply_to_id=comment.id, _anchor=anchor_id) %}
+                        {% else %}
+                            {% set reply_url = login_url %}
+                        {% endif %}
+                        <a href="{{reply_url}}">
+                            reply
+                        </a>
+                    {% endif %}
+
+                    {% if user.id %}
+                        {% if view.edit_comment_id != comment.id and (user.id == comment.user_id or user.is_admin or user.is_moderator)  %}
+                            {% set edit_url = url_for("post.details", post_id=view.post.id, slug=view.post.slug, edit_comment_id=comment.id, _anchor=anchor_id) %}
+                            <a href="{{edit_url}}">
+                                edit
+                            </a>
+                        {% endif %}
+
+                        {% if (user.id == comment.user_id or user.is_admin or user.is_moderator) %}
+                            {% set delete_url = url_for("post.delete_comment", comment_id=comment.id) %}
+                            <a href="{{delete_url}}">
+                                delete
+                            </a>
+                        {% endif %}
+                    {% endif %}
+
+                    {# {% if user.id != comment.user_id %} #}
+                    {#      <a href="{{url}}"> #}
+                    {#              report #}
+                    {#      </a> #}
+                    {# {% endif %} #}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endmacro %}
+
+
+{% macro reply_form(view, comment) %}
+	{% set user = view.user %}
+    {% if user.id %}
+        {% if view.reply_to_id == comment.id %}
+            <div class="reply-form">
+                {% if action_result and action_result.status == False %}
+                    <p class="error">{{action_result.result.error}}</p>
+                {% endif %}
+                Your reply:
+                <br/>{{_content.formatting_help_link()}}
+                <form action="{{url_for('post.save_comment', post_id=view.post.id)}}" method="POST" accept-charset="UTF-8">
+                    <input type="hidden" name="post_id" value="{{view.post.id}}"/>
+                    <input type="hidden" name="parent_comment_id" value="{{comment.id}}"/>
+                    <textarea name="comment" class="u-full-width" placeholder=""></textarea>
+                    <input type="submit" value="Reply" class="button-primary"/>
+                    <div class="u-pull-right">
+                        <a href="{{url_for('post.show', post_id=view.post.id, slug=view.post.slug, _anchor='comment-' + view.reply_to_id|string)}}"
+                           class="button button-default">Cancel</a>
+                    </div>
+
+                    {{_forms.csrf_form_input()}}
+                </form>
+            </div>
+        {% endif %}
+    {% endif %}
+{% endmacro %}
+
+
+{% macro render_comments(view, comments) %}
+    {% if comments.order -%}
+        <ul class="unstyled comments thread">
+            {% for id in comments.order -%}
+                <li>
+                    {{single_comment(view, comments.children[id].value)}}
+                    {{reply_form(view, comments.children[id].value)}}
+                    {{render_comments(view, comments.children[id])}}
+                </li>
+            {%- endfor %}
+        </ul>
+    {% endif %}
+{% endmacro %}
+
+{% macro comments_tree(view, comments) %}
+    {% if comments.order %}
+        <ul class="unstyled comments thread">
+            {% for id in comments.order -%}
+                <li>
+                    {{single_comment(view, comments.children[id].value)}} 
+                    {{reply_form(view, comments.children[id].value)}} 
+                    {{render_comments(view, comments.children[id])}} 
+                </li>
+            {%- endfor %}
+        </ul>
+    {% endif %}
+{% endmacro %}

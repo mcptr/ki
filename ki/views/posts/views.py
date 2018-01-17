@@ -24,7 +24,6 @@ class ListView(MethodView):
         offset = (page * limit) - limit
 
         posts = self._load_posts(offset, limit, **kwargs)
-
         return self.mk_response(
             template=self.template,
             title=self._get_view_title(**kwargs),
@@ -33,7 +32,8 @@ class ListView(MethodView):
                 self._get_pagination_endpoint(**kwargs),
                 page,
                 len(posts),
-                limit
+                limit,
+                **kwargs,
             )
         )
 
@@ -56,7 +56,7 @@ class PostsByTag(ListView):
         if not tag:
             return []
         with self.api.pgsql.transaction() as tx:
-            return model.get_by_tag(tx, tag, offset, limit)
+            return model.get_posts_by_tag(tx, tag, offset, limit)
 
     def _get_view_title(self, **kwargs):
         return gettext("Tag: %s", kwargs.get("tag", None))
@@ -64,19 +64,17 @@ class PostsByTag(ListView):
     def _get_pagination_endpoint(self, **kwargs):
         return "posts.by_tag_paged"
 
-    # view = schzd.web.view.View(
-    #     "posts/index.jinja2",
-    #     view_menu=menus.get_posts_view_menu(),
-    #     subtitle="Recent posts",
-    # )
 
-    # return view.render(
-    #     posts=posts,
-    #     page_id=page_id,
-    #     pagination=schzd.web.pagination.mk_urls(
-    #         "posts.recent",
-    #         page_id,
-    #         len(posts),
-    #         PAGE_LIMIT
-    #     ),
-    # )
+class PostsByUser(ListView):
+    def _load_posts(self, offset, limit, **kwargs):
+        user = kwargs.get("username", None)
+        if not user:
+            return []
+        with self.api.pgsql.transaction() as tx:
+            return model.get_posts_by_user(tx, user, offset, limit)
+
+    def _get_view_title(self, **kwargs):
+        return gettext("Posts by: %(username)s", username=kwargs.get("username", None))
+
+    def _get_pagination_endpoint(self, **kwargs):
+        return "posts.by_user_paged"
