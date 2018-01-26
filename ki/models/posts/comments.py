@@ -99,9 +99,11 @@ def get_comments_tree(tx, post_id):
     threads_order = []
     last_thread = None
 
+    print(tx.mogrify(sql, (post_id,)))
     tx.execute(sql, (post_id,))
 
     for c in tx.fetchall():
+        print(c)
         if not c.path:
             threads[c.id] = Node(c._asdict())
             threads_order.append(c.id)
@@ -110,6 +112,7 @@ def get_comments_tree(tx, post_id):
             data = c._asdict()
             data.update(path=c.path[1:])
             threads[thread_id].insert(Node(data))
+
     return dict(
         children=threads,
         order=threads_order

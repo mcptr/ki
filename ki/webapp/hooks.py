@@ -19,21 +19,20 @@ def load_user(app):
     flask.g.user = None
     flask.g.session = None
 
-    session_id = flask.session.get("id", None)
-    if not session_id:
-        session_id = str(uuid.uuid4())
-        flask.session["id"] = session_id
-
     current_user_agent = flask.request.headers.get("user-agent", "")
+    session_id = flask.session.get("id", None)
 
-    sess = ki.models.sessions.Session(
+    log.info("Loading session: %s", session_id)
+    flask.g.session = ki.models.sessions.Session(
         id=session_id,
         user_agent=current_user_agent,
     )
-    with api.pgsql.transaction() as tx:
-        r = ki.models.sessions.load(tx, sess)
 
-        flask.g.session = ki.models.sessions.Session(**r._asdict()) if r else sess
+    with api.pgsql.transaction() as tx:
+        if not flask.g.session.load(tx):
+            flask.g.session.create(tx)
+
+        flask.session["id"] = flask.g.session.id
 
         sua = flask.g.session.user_agent
 
@@ -41,14 +40,14 @@ def load_user(app):
             log.error("Session user-agent mismatch. Session id: %s ", flask.g.session.id)
             flask.abort(401)
 
-        ki.models.sessions.touch(tx, flask.g.session)
+        flask.g.session.touch(tx)
+
         user_data = dict()
 
         if flask.g.session.user_id:
             log.info("Loading user: %s", flask.g.session.user_id)
             u = ki.models.users.User(id=flask.g.session.user_id)
             user_data = ki.models.users.get(tx, u)
-            print(u.as_dict(), user_data)
         flask.g.user = ki.models.users.User(**user_data._asdict()) if user_data else None
         tx.connection.commit()
 

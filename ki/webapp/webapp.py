@@ -1,9 +1,11 @@
 import flask
 import flask_babel
+import flask_mail
 import jinja2
 from collections import namedtuple
 from functools import partial
 
+import ki.std
 import ki.logg
 import ki.cache
 import ki.web.filters
@@ -11,11 +13,23 @@ import ki.web.jinja_extensions
 from . import hooks
 
 
-class FlaskApp(flask.Flask):
-    pass
-
-
 Api = namedtuple("Api", ["cache", "pgsql"])
+
+
+class FlaskApp(flask.Flask):
+    log = ki.logg.get(__name__)
+
+    def render_l10n_template(self, locale, tpl, **kwargs):
+        locale = (locale or self.config.get("BABEL_DEFAULT_LOCALE", "en_US"))
+        template = ki.std.os.path.join("l10n", locale, tpl)
+        try:
+            data = flask.render_template(template, **kwargs)
+            return data
+        except Exception as e:
+            self.log.exception(e)
+
+        template = ki.std.os.path.join("l10n", "en_US", tpl)
+        return flask.render_template(template, **kwargs)
 
 
 class Webapp:
@@ -46,7 +60,7 @@ class Webapp:
         ki.web.jinja_extensions.register(self.flask_app)
 
     def mk_view(self, cls, *args, **kwargs):
-        vargs = tuple([self.api, *args])
+        vargs = tuple([self, *args])
         view_func = cls.as_view(cls.__name__, *vargs, **kwargs)
         return view_func
 
@@ -78,18 +92,14 @@ class Webapp:
         self.flask_app.before_request_funcs[bp] = hooks
 
     def init_extensions(self):
-        self.flask_app.jinja_env.autoescape = jinja2.select_autoescape(
-            enabled_extensions=("jinja2", "html", "xml"),
-            default_for_string=True,
-        )
-
+        mail_app = flask_mail.Mail(self.flask_app)
         babel = flask_babel.Babel(self.flask_app)
         babel.locale_selector_func = self.locale_selector
 
         self.extensions.update(
             babel=babel,
+            mail=mail_app,
         )
-
     def locale_selector(self):
         flask.request.accept_languages.best_match(
             self.config.LANGUAGES.keys()

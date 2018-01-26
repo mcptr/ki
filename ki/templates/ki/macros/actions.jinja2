@@ -1,0 +1,18 @@
+{% macro message(result) %}
+    {% if result %}
+        {% set css_class = "success" if result.status else "error" %}
+        <p class="action {{css_class}}">{{result.result.message}}</p>
+    {% endif %}
+{% endmacro %}
+
+
+{% macro results(action) %}
+    {% if action %}
+        {% set css_class = "success" if action.status else "error" %}
+        <ul class="unstyled error">
+            {% for field in action.result %}
+                <li class="action {{css_class}}">{{action.result[field]}}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endmacro %}

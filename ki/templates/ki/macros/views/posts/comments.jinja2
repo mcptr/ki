@@ -1,4 +1,5 @@
 {% import "ki/macros/content.jinja2" as _content %}
+{% import "ki/macros/forms.jinja2" as _forms %}
 
 
 {% macro new_comment_form(view) %}
@@ -17,7 +18,7 @@
             {{_content.formatting_help_link()}}
             <form action="{{url_for('post.save_comment')}}" method="POST" accept-charset="UTF-8">
                 <input type="hidden" name="post_id" value="{{view.post.id}}"/>
-                <textarea name="comment" class="u-full-width"></textarea>
+                <textarea name="content" class="u-full-width"></textarea>
                 <input type="submit" value="Comment" class="button-primary"/>
                 {{_forms.csrf_form_input()}}
             </form>
@@ -48,7 +49,8 @@
         </div>
         <div class="content-wrapper">
             {% if view.edit_comment_id == comment.id %}
-                {{render_edit_comment_form(view, user, comment)}}
+				#######
+                {{edit_form(view, comment)}}
             {% else %}
                 <div class="content">
                     {% if comment.deleted %}
@@ -100,6 +102,30 @@
 {% endmacro %}
 
 
+{% macro edit_form(view, comment) %}
+	{% set user = view.user %}
+    {% if user.id %}
+        <div class="edit-form">
+            {% if action_result and action_result.status == False %}
+                <p class="error">{{action_result.result.error}}</p>
+            {% endif %}
+            Edit:
+            <form action="{{url_for('post.save_comment', post_id=view.post.id)}}" method="POST" accept-charset="UTF-8">
+                <input type="hidden" name="post_id" value="{{view.post.id}}"/>
+                <input type="hidden" name="comment_id" value="{{comment.id}}"/>
+                <textarea name="content" class="u-full-width" placeholder="">{{comment.content}}</textarea>
+                <input type="submit" value="Save" class="button-primary"/>
+                <div class="u-pull-right">
+                    <a href="{{url_for('post.details', post_id=view.post.id, slug=view.post.slug, _anchor='comment-' + view.edit_comment_id|string)}}"
+                       class="button button-default">Cancel</a>
+                </div>
+                {{_forms.csrf_form_input()}}
+            </form>
+        </div>
+    {% endif %}
+{% endmacro %}
+
+
 {% macro reply_form(view, comment) %}
 	{% set user = view.user %}
     {% if user.id %}
@@ -112,11 +138,11 @@
                 <br/>{{_content.formatting_help_link()}}
                 <form action="{{url_for('post.save_comment', post_id=view.post.id)}}" method="POST" accept-charset="UTF-8">
                     <input type="hidden" name="post_id" value="{{view.post.id}}"/>
-                    <input type="hidden" name="parent_comment_id" value="{{comment.id}}"/>
-                    <textarea name="comment" class="u-full-width" placeholder=""></textarea>
+                    <input type="hidden" name="parent_id" value="{{comment.id}}"/>
+                    <textarea name="content" class="u-full-width" placeholder=""></textarea>
                     <input type="submit" value="Reply" class="button-primary"/>
                     <div class="u-pull-right">
-                        <a href="{{url_for('post.show', post_id=view.post.id, slug=view.post.slug, _anchor='comment-' + view.reply_to_id|string)}}"
+                        <a href="{{url_for('post.details', post_id=view.post.id, slug=view.post.slug, _anchor='comment-' + view.reply_to_id|string)}}"
                            class="button button-default">Cancel</a>
                     </div>
 
@@ -128,14 +154,18 @@
 {% endmacro %}
 
 
+{% macro thread(view, comments, id) %}
+    {{single_comment(view, comments.children[id].value)}}
+    {{reply_form(view, comments.children[id].value)}}
+    {{render_comments(view, comments.children[id])}}
+{% endmacro %}	
+
 {% macro render_comments(view, comments) %}
     {% if comments.order -%}
         <ul class="unstyled comments thread">
             {% for id in comments.order -%}
                 <li>
-                    {{single_comment(view, comments.children[id].value)}}
-                    {{reply_form(view, comments.children[id].value)}}
-                    {{render_comments(view, comments.children[id])}}
+					{{thread(view, comments, id)}}
                 </li>
             {%- endfor %}
         </ul>
@@ -147,9 +177,7 @@
         <ul class="unstyled comments thread">
             {% for id in comments.order -%}
                 <li>
-                    {{single_comment(view, comments.children[id].value)}} 
-                    {{reply_form(view, comments.children[id].value)}} 
-                    {{render_comments(view, comments.children[id])}} 
+					{{thread(view, comments, id)}}
                 </li>
             {%- endfor %}
         </ul>

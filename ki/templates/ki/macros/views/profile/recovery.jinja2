@@ -1,0 +1,45 @@
+{% import "ki/macros/forms.jinja2" as _forms %}
+
+{% macro email_form(view) %}
+	<section class="box recovery container">
+        <h3>{{_("Profile recovery")}}</h3>
+        {{_forms.action_result(view.action)}}
+        <div>
+            <form action="{{url_for('profile.recovery')}}"
+                  method="POST"
+                  autocomplete="off"
+                  name="recovery-form"
+                  accept-charset="UTF-8">
+                  <input type="email" name="email"
+                         placeholder="email"
+                         class="u-full-width"
+                         maxlength="32" required/>
+                         <input type="submit" value="{{_("Recover")}}"
+								class="button button-primary"/>
+                         {{_forms.csrf_form_input()}}
+            </form>
+        </div>
+    </section>
+
+{% endmacro %}
+
+
+{% macro password_change_form(view) %}
+    <section class="box recovery container">
+        <h3>{{_("New password")}}</h3>
+        {{_forms.action_result(view.action)}}
+        <div>
+            <form action="{{url_for('profile.recovery_password_change', v_id=view.verification_id)}}"
+                  method="POST"
+                  autocomplete="off"
+                  name="recovery-password-change"
+                  accept-charset="UTF-8">
+                  <input type="password" name="password" placeholder="password" class="u-full-width" maxlength="256"/>
+                  <input type="submit" value="{{_("Recover")}}" class="button button-primary"/>
+                  {{_forms.csrf_form_input()}}
+            </form>
+        </div>
+    </section>
+
+
+{% endmacro %}

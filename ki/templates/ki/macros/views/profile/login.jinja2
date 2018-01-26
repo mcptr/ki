@@ -4,13 +4,12 @@
     <div class="container box auth login-form">
         <h3>{{_("Login")}}</h3>
 
-        {# {{_actions.render_message(view.action_result)}} #}
-        {% set form_data = (dict() if not view.action_result else view.action_result.input_data) %}
+        {{_forms.action_result(view.action)}}
                 
         <form action="{{url_for("profile.login")}}" method="POST" accept-charset="UTF-8">
             <div class="u-full-width">
                 <input type="text" name="name" placeholder="username"
-                       value="{{form_data.username}}"
+                       value=""
                        class="u-full-width" maxlength="128" required/>
             </div>
             <div class="u-full-width">

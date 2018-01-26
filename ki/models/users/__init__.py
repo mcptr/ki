@@ -23,6 +23,7 @@ class User:
         self.is_closed = kwargs.pop("is_moderator", False)
         self.email_verified_on = kwargs.pop("email_verified_on", None)
         self.is_active = kwargs.pop("is_active", False)
+        self.locale = kwargs.pop("locale", False)
 
     def as_dict(self):
         return self.__dict__
@@ -69,8 +70,6 @@ def delete(tx, user, **kwargs):
         sql = "DELETE FROM auth.users WHERE id=%s"
         tx.execute(sql, (user.id, ))
 
-    return True
-
 
 def get(tx, user, active_only=True, **kwargs):
     if not user.id:
@@ -80,7 +79,7 @@ def get(tx, user, active_only=True, **kwargs):
 
     sql = (
         "SELECT id, name, email, is_active, is_admin, is_moderator,"
-        "    email_verified_on,"
+        "    email_verified_on, locale,"
         "    ctime, mtime"
         "  FROM auth.users"
         "  WHERE id=%s"
@@ -93,10 +92,10 @@ def get(tx, user, active_only=True, **kwargs):
     return tx.fetchone()
 
 
-def get_by_email(tx, user, active_only=True, **kwargs):
+def get_by_email(tx, email, active_only=True, **kwargs):
     sql = (
         "SELECT id, name, email, is_active, is_admin, is_moderator,"
-        "    email_verified_on,"
+        "    email_verified_on, locale, "
         "    ctime, mtime"
         "  FROM auth.users"
         "  WHERE email=%s"
@@ -105,7 +104,7 @@ def get_by_email(tx, user, active_only=True, **kwargs):
     if active_only:
         sql += " AND is_active"
 
-    tx.execute(sql, (user.email,))
+    tx.execute(sql, (email,))
     return tx.fetchone()
 
 
@@ -141,8 +140,8 @@ def user_exists(tx, user):
     return r.user_exists
 
 
-def email_exists(tx, user):
-    email = user.email.strip()
+def email_exists(tx, email):
+    email = email.strip()
 
     sql = (
         "SELECT COUNT(id) > 0 AS email_exists"
@@ -166,13 +165,14 @@ def authenticate(tx, user):
     return r.id
 
 
-def set_password(tx, user):
+def set_password(tx, user, password=None):
     log.info("Setting password: %s", user.id)
-    validators.validate_password(user.password)
+    password = (password or user.password)
+    validators.validate_password(password)
 
     sql = "UPDATE auth.users SET password = %s WHERE id=%s RETURNING id"
 
-    tx.execute(sql, (user.password, user.id))
+    tx.execute(sql, (password, user.id))
     r = tx.fetchone()
     return r.id if r else None
 
@@ -190,16 +190,16 @@ def set_email_verified(tx, user):
     return r.id is not None
 
 
-def set_email(tx, user):
+def set_email(tx, user, email):
     log.info("Setting email for user: %s", user.id)
-    validators.validate_email(user.email)
+    validators.validate_email(email)
 
     sql = (
         "UPDATE auth.users SET email = %s, email_verified_on = NULL"
         "  WHERE id=%s RETURNING id"
     )
 
-    tx.execute(sql, (user.email, user.id,))
+    tx.execute(sql, (email, user.id,))
     r = tx.fetchone()
     return r.id is not None
 

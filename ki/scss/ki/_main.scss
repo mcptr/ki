@@ -68,6 +68,29 @@ body {
 	text-shadow: none;
 
     }
+
+    .action {
+	ul {
+	    list-style: none;
+	}
+
+	&.messages {
+	    ul {
+		li {
+		    font-weight: bold;
+		    color: #3c8e8f;
+		}
+	    }
+	}
+
+	&.errors {
+	    ul {
+		li {
+		    color: darkred;
+		}
+	    }
+	}
+    }
 }
 
 @media (min-width: 1200px) {

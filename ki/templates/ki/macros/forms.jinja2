@@ -1,3 +1,53 @@
 {% macro csrf_form_input() %}
         <input type="hidden" name="_csrf_token" value="{{csrf_token()}}"/>
 {% endmacro %}
+
+
+{% macro action_messages(action) %}
+	{% if action and action.messages %}
+		<div class="action messages">
+			<ul>
+				{% for msg in action.messages %}
+					<li>{{msg}}</li>
+				{% endfor %}
+			</ul>
+		</div>
+	{% endif %}
+{% endmacro %}
+
+
+{% macro action_errors(action) %}
+	{% if action and action.errors %}
+		<div class="action errors">
+			<ul>
+				{% for msg in action.errors %}
+					<li>{{msg}}</li>
+				{% endfor %}
+			</ul>
+		</div>
+	{% endif %}
+{% endmacro %}
+
+
+{% macro field_errors(action, field) %}
+	{% if action and action.field_errors and field in action.field_errors %}
+		<div class="action errors">
+			<ul>
+				{% for msg in action.field_errors[field] %}
+					<li>{{msg}}</li>
+				{% endfor %}
+			</ul>
+		</div>
+	{% endif %}
+{% endmacro %}
+
+
+{% macro action_result(action) %}
+    {{action_messages(action)}}
+    {{action_errors(action)}}
+{% endmacro %}
+
+
+{% macro field_value(action, field, default=None) -%}
+	{{action.get_value(field, default)}}
+{%- endmacro %}

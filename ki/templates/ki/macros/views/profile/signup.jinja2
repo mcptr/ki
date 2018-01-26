@@ -1,0 +1,41 @@
+{% import "ki/macros/forms.jinja2" as _forms %}
+
+
+{% macro signup_form(view) %}
+	<div class="container box auth signup-form">
+        <h3>{{_("Sign-up")}}</h3>
+		{{_forms.action_result(view.action)}}
+        <form action="" method="POST" name="signup-form" accept-charset="UTF-8">
+            <div class="u-full-width">
+				{{_forms.field_errors(view.action, "name")}}
+                <input type="text" name="name"
+                       placeholder="{{_("username")}}"
+					   class="u-full-width"
+					   value="{{_forms.field_value(view.action, "email", "")}}"
+                       maxlength="32" required/>
+            </div>
+            <div class="u-full-width">
+				{{_forms.field_errors(view.action, "email")}}
+                <input type="email" name="email"
+                       placeholder="{{_("email (optional)")}}"
+					   class="u-full-width"
+                       maxlength="512"
+					   value="{{_forms.field_value(view.action, "email", "")}}"/>
+            </div>
+            <div class="u-full-width">
+				{{_forms.field_errors(view.action, "password")}}
+                <input type="password" name="password"
+                       placeholder="{{_("password (min. 6 characters)")}}"
+					   class="u-full-width"
+                       maxlength="256" value="" autocomplete="off" required/>
+            </div>
+            <input type="submit" value="{{_("Sign-up")}}" class="button button-primary"/>
+            {{_forms.csrf_form_input()}}
+            {# <p class="hint"> #}
+            {#     Email address is optional, however without it your account cannot be recovered #}
+            {#     if your password is lost. #}
+            {#     Please read our <a href="{{url_for('privacy_statement')}}">privacy statement</a>. #}
+            {# </p> #}
+        </form>
+    </div>
+{% endmacro %}

@@ -22,12 +22,11 @@
 	</head>
 	<body>
 		<section class="container">
-				{% block logo %}
-					<div class="logo">
-						<a href="/">KI</a>
-					</div>
-				{% endblock logo %}
-			</div>
+			{% block logo %}
+				<div class="logo">
+					<a href="/">KI</a>
+				</div>
+			{% endblock logo %}
 			<nav class="nav top">
 				{% block nav_top %}
 					{{ _nav.view_menu(view) }}
@@ -36,12 +35,12 @@
 				{% endblock %}
 			</nav>
 			<div class="u-cf">
-				<nav class="subnav">
-					{% block subnav %}
+				{% block subnav %}
+					<nav class="subnav">
 						{{ _nav.render_nav(view.subnav) }}
 						<br/>
-					{% endblock %}
-				</nav>
+					</nav>
+				{% endblock %}
 			</div>
 		</section>
 

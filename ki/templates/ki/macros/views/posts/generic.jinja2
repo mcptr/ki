@@ -39,3 +39,15 @@
 		{{post.content}}
 	</section>
 {% endmacro %}
+
+
+{% macro edit_url(view) %}
+	{% set post = view.post %}
+	{% set user = view.user %}
+    {% if post.author == user.name or user.is_admin or user.is_moderator %}
+        <a href="{{url_for('post.edit', post_id=post.id)}}"
+           class="control edit-post">
+           <span>edit</span>
+        </a>
+    {% endif %}
+{% endmacro %}
