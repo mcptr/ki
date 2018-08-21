@@ -120,6 +120,10 @@ class Session:
     def get(self, k, default=None):
         return self.storage.get(k, default)
 
+    def remove(self, k):
+        if k in self.storage:
+            del self.storage[k]
+
 
 # TODO: make a periodic app for this
 def remove_expired(api):

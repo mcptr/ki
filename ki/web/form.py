@@ -34,5 +34,3 @@ class Form:
         except voluptuous.Error as e:
             print(e)
             return FormData(self._values, e.errors)
-
-

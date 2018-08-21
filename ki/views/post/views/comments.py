@@ -67,7 +67,6 @@ class Save(MethodView):
             else:
                 anchor = "comment-%d" % parent_id if parent_id else None
 
-            print("#########", saved_comment_id)
             return self.redirect(
                 "post.details",
                 post_id=post_record["id"],
@@ -103,6 +102,7 @@ class Delete(MethodView):
                 "post.details",
                 post_id=post.get("id", 0),
                 slug=post.get("slug", ""),
+                _anchor="comment-%d" % (comment_id)
             )
         else:
             return self.redirect("posts.main")

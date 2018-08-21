@@ -24,15 +24,33 @@ def create_app(webapp, **kwargs):
     )
 
     app.add_url_rule(
+        "/create",
+        "create",
+        view_func=webapp.mk_view(post.Create)
+    )
+
+    app.add_url_rule(
         "/edit/<int:post_id>",
         "edit",
         view_func=webapp.mk_view(post.Edit)
     )
 
     app.add_url_rule(
+        "/cancel",
+        "cancel_edit",
+        view_func=webapp.mk_view(post.CancelEdit)
+    )
+
+    app.add_url_rule(
         "/save",
         "save",
         view_func=webapp.mk_view(post.Save)
+    )
+
+    app.add_url_rule(
+        "/preview",
+        "preview",
+        view_func=webapp.mk_view(post.Preview)
     )
 
     app.add_url_rule(

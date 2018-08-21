@@ -33,6 +33,16 @@ def get_posts_nav():
     return menu
 
 
+def get_posts_subnav():
+    menu = [
+        dict(
+            href=flask.url_for("post.create"),
+            caption=gettext("New post"),
+        ),
+    ]
+    return menu
+
+
 def get_footer_nav():
     menu = [
         dict(

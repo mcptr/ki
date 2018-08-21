@@ -1,12 +1,12 @@
 import time
+import uuid
 
 
-class Session:
-    def __init__(self, redis_conn, id, ttl=(3600 * 24)):
-        self.id = id
+class Cache:
+    def __init__(self, redis_conn, key=None, ttl=(3600 * 24)):
+        self.cache_key = (key or uuid.uuid4())
         self.ttl = ttl
         self.redis = redis_conn
-        self.cache_key = "user:session:%s" % self.id
 
     def update(self, **mapping):
         return self.redis.hmset(self.cache_key, mapping)

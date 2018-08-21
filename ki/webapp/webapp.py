@@ -100,6 +100,7 @@ class Webapp:
             babel=babel,
             mail=mail_app,
         )
+
     def locale_selector(self):
         flask.request.accept_languages.best_match(
             self.config.LANGUAGES.keys()

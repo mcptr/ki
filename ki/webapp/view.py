@@ -1,6 +1,7 @@
 import flask
 import flask.views
 import ki.logg
+import ki.std
 import ki.web.nav
 from ki.web.form import Form, FormData
 import ki.models.actions
@@ -15,17 +16,34 @@ class BaseView:
     def __init__(self, app, *args, **kwargs):
         self.app = app
         self.api = app.api
+        self.session = flask.g.session
+        self.user = flask.g.user
+        self.request = flask.request
+        self.previous_view = "/"
+        if self.request.referrer:
+            parsed = ki.std.urlparse(self.request.referrer)
+            self.previous_view = parsed.path
+            if parsed.query:
+                self.previous_view += "?" + parsed.query
+            if parsed.fragment:
+                self.previous_view += "#" + parsed.fragment
+
 
     def mk_response(self, **kwargs):
         template = kwargs.pop("template", None)
         nav = kwargs.pop("nav", ki.web.nav.get_posts_nav())
+        subnav = kwargs.pop("subnav", ki.web.nav.get_posts_subnav())
         footer = kwargs.pop("footer", ki.web.nav.get_footer_nav())
+        user = kwargs.pop("user", flask.g.user)
 
         kwargs.update(nav=nav)
+        kwargs.update(subnav=subnav)
         kwargs.update(footer=footer)
-        kwargs.update(user=kwargs.pop("user", flask.g.user.as_dict()))
-        kwargs.update(session=kwargs.pop("session", flask.g.session))
-        kwargs.update(request=kwargs.pop("request", flask.request))
+        kwargs.update(user=kwargs.pop("user", user.as_dict() if user else None))
+        kwargs.update(session=kwargs.pop("session", self.session))
+        kwargs.update(request=kwargs.pop("request", self.request))
+
+        kwargs.update(previous_view=self.previous_view)
 
         if not "action" in kwargs:
             action_id = flask.request.args.get(
@@ -58,6 +76,13 @@ class BaseView:
             kwargs[action.url_param] = action.id
 
         return flask.redirect(url, **kwargs)
+
+    def redirect_back(self, **kwargs):
+        p = ki.std.urlparse(self.request.args.get("location", "/"))
+        url = p.path
+        if p.query:
+            url += "?" + p.query
+        return flask.redirect(url)
 
     def get_form(self):
         return Form(

@@ -41,8 +41,7 @@
 {% endmacro %}
 
 
-{% macro edit_url(view) %}
-	{% set post = view.post %}
+{% macro edit_url(post, view) %}
 	{% set user = view.user %}
     {% if post.author == user.name or user.is_admin or user.is_moderator %}
         <a href="{{url_for('post.edit', post_id=post.id)}}"
@@ -51,3 +50,5 @@
         </a>
     {% endif %}
 {% endmacro %}
+
+
